@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Reasoning Diagnostic</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8fafc; color: #0f172a; min-height: 100vh; padding: 2rem 1rem; }
+  #app { max-width: 56rem; margin: 0 auto; }
+  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 3rem; }
+  .logo { display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 0.95rem; color: #1e293b; }
+  .logo svg { color: #2563eb; }
+  .btn-ghost { background: none; border: none; cursor: pointer; font-size: 0.875rem; color: #64748b; font-weight: 500; transition: color 0.15s; }
+  .btn-ghost:hover { color: #0f172a; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .fade-in { animation: fadeIn 0.35s ease-out forwards; }
+
+  /* Home */
+  .hero { text-align: center; margin-bottom: 2.5rem; }
+  .hero-icon { display: inline-flex; align-items: center; justify-content: center; width: 4rem; height: 4rem; border-radius: 9999px; background: #dbeafe; color: #2563eb; margin-bottom: 1.5rem; }
+  h1 { font-size: clamp(1.6rem, 4vw, 2.25rem); font-weight: 800; letter-spacing: -0.02em; margin-bottom: 1rem; color: #0f172a; }
+  .subtitle { font-size: 1.125rem; color: #475569; font-weight: 500; max-width: 38rem; margin: 0 auto; line-height: 1.6; }
+  .intro-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 1rem; padding: 2rem; max-width: 48rem; margin: 0 auto 2.5rem; }
+  .intro-card p { color: #334155; line-height: 1.75; margin-bottom: 1rem; }
+  .intro-card p:last-child { margin-bottom: 0; }
+  .intro-divider { border-top: 1px solid #f1f5f9; margin-top: 1.5rem; padding-top: 1.5rem; }
+  .intro-prompt { font-weight: 600; color: #0f172a; font-size: 1.05rem; line-height: 1.6; }
+  .category-list { max-width: 48rem; margin: 0 auto; display: flex; flex-direction: column; gap: 0.75rem; }
+  .category-btn { display: flex; align-items: flex-start; gap: 1rem; padding: 1.25rem 1.5rem; background: #fff; border: 1.5px solid #e2e8f0; border-radius: 0.875rem; cursor: pointer; text-align: left; transition: border-color 0.15s, box-shadow 0.15s; width: 100%; }
+  .category-btn:hover { border-color: #2563eb; box-shadow: 0 4px 12px rgba(0,0,0,0.07); }
+  .category-btn:hover .cat-id { background: #dbeafe; color: #2563eb; }
+  .category-btn:hover .cat-title { color: #2563eb; }
+  .cat-id { flex-shrink: 0; width: 2.5rem; height: 2.5rem; background: #f1f5f9; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.1rem; color: #475569; transition: background 0.15s, color 0.15s; }
+  .cat-title { font-weight: 700; font-size: 1rem; color: #0f172a; margin-bottom: 0.25rem; transition: color 0.15s; }
+  .cat-desc { font-size: 0.9rem; color: #64748b; line-height: 1.5; }
+  .start-hint { text-align: center; margin-top: 1rem; }
+  .link-btn { background: none; border: none; cursor: pointer; color: #2563eb; font-weight: 500; font-size: 0.875rem; }
+  .link-btn:hover { color: #1d4ed8; text-decoration: underline; }
+
+  /* Scenario */
+  .scenario-wrap { max-width: 42rem; margin: 0 auto; }
+  .back-btn { display: inline-flex; align-items: center; gap: 0.25rem; background: none; border: none; cursor: pointer; font-size: 0.875rem; font-weight: 500; color: #64748b; margin-bottom: 1.5rem; transition: color 0.15s; }
+  .back-btn:hover { color: #0f172a; }
+  .progress-bar-wrap { margin-bottom: 2rem; }
+  .progress-meta { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 500; color: #64748b; margin-bottom: 0.4rem; }
+  .progress-track { height: 6px; background: #e2e8f0; border-radius: 9999px; overflow: hidden; }
+  .progress-fill { height: 100%; background: #2563eb; border-radius: 9999px; transition: width 0.3s ease; }
+  .scenario-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 1rem; padding: 2rem; position: relative; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.05); }
+  .scenario-accent { position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #2563eb; }
+  .scenario-title { font-size: 1.2rem; font-weight: 700; color: #0f172a; margin-bottom: 1rem; display: flex; align-items: flex-start; gap: 0.5rem; line-height: 1.4; }
+  .scenario-title svg { flex-shrink: 0; margin-top: 2px; color: #2563eb; }
+  .scenario-body { color: #334155; font-size: 1rem; line-height: 1.75; margin-bottom: 2rem; }
+  .match-prompt { font-weight: 600; color: #0f172a; text-align: center; margin-bottom: 1rem; }
+  .match-box { background: #f8fafc; border: 1px solid #f1f5f9; border-radius: 0.875rem; padding: 1.5rem; }
+  .btn-primary { display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; padding: 0.9rem; background: #2563eb; color: #fff; border: none; border-radius: 0.625rem; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: background 0.15s; margin-bottom: 0.75rem; }
+  .btn-primary:hover { background: #1d4ed8; }
+  .nav-row { display: flex; gap: 0.5rem; }
+  .btn-secondary { flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.8rem; background: #fff; border: 1.5px solid #e2e8f0; border-radius: 0.625rem; font-weight: 500; font-size: 0.9rem; color: #334155; cursor: pointer; transition: background 0.15s; }
+  .btn-secondary:hover:not(:disabled) { background: #f8fafc; }
+  .btn-secondary:disabled { background: #f1f5f9; color: #94a3b8; cursor: not-allowed; border-color: #f1f5f9; }
+
+  /* End of category */
+  .end-wrap { max-width: 42rem; margin: 0 auto; text-align: center; padding: 3rem 0; }
+  .end-icon { display: inline-flex; align-items: center; justify-content: center; width: 4rem; height: 4rem; border-radius: 9999px; background: #f1f5f9; color: #64748b; margin-bottom: 1.5rem; }
+  .end-wrap h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.75rem; }
+  .end-wrap p { color: #64748b; font-size: 1rem; margin-bottom: 2rem; line-height: 1.6; }
+  .end-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; }
+  .btn-outline { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.7rem 1.25rem; background: #fff; border: 1.5px solid #e2e8f0; border-radius: 0.625rem; font-weight: 500; font-size: 0.9rem; color: #334155; cursor: pointer; transition: border-color 0.15s; }
+  .btn-outline:hover { border-color: #94a3b8; }
+  .btn-solid { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.7rem 1.25rem; background: #2563eb; color: #fff; border: none; border-radius: 0.625rem; font-weight: 500; font-size: 0.9rem; cursor: pointer; transition: background 0.15s; }
+  .btn-solid:hover { background: #1d4ed8; }
+
+  /* Diagnosis */
+  .diagnosis-wrap { max-width: 42rem; margin: 0 auto; }
+  .diagnosis-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 1rem; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06); margin-bottom: 1.5rem; }
+  .diagnosis-header { background: #f0fdf4; padding: 1.5rem 2rem; border-bottom: 1px solid #dcfce7; }
+  .diagnosis-badge { display: flex; align-items: center; gap: 0.5rem; color: #15803d; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+  .diagnosis-name { font-size: clamp(1.3rem, 3vw, 1.75rem); font-weight: 800; color: #0f172a; line-height: 1.25; }
+  .diagnosis-body-wrap { padding: 1.75rem 2rem; }
+  .diagnosis-body { color: #334155; font-size: 1rem; line-height: 1.75; margin-bottom: 1.5rem; }
+  .confusion-box { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 0.75rem; padding: 1.25rem 1.5rem; }
+  .confusion-title { display: flex; align-items: center; gap: 0.5rem; font-weight: 700; color: #9a3412; margin-bottom: 0.6rem; font-size: 0.95rem; }
+  .confusion-body { color: #334155; font-size: 0.9rem; line-height: 1.65; }
+  .confusion-body strong { color: #0f172a; }
+  .diagnosis-actions { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.75rem; margin-top: 1.5rem; }
+  .diagnosis-actions-left { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+  .btn-dark { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.7rem 1.25rem; background: #0f172a; color: #fff; border: none; border-radius: 0.625rem; font-weight: 500; font-size: 0.9rem; cursor: pointer; transition: background 0.15s; }
+  .btn-dark:hover { background: #1e293b; }
+
+  /* Outro */
+  .outro-wrap { max-width: 42rem; margin: 0 auto; }
+  .outro-card { background: #0f172a; color: #fff; border-radius: 1rem; padding: 2.5rem; margin-bottom: 1.5rem; position: relative; overflow: hidden; }
+  .outro-bg-icon { position: absolute; top: -2.5rem; right: -2.5rem; opacity: 0.07; pointer-events: none; }
+  .outro-card h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; position: relative; line-height: 1.35; }
+  .outro-paras { display: flex; flex-direction: column; gap: 1.25rem; position: relative; }
+  .outro-paras p { color: #cbd5e1; font-size: 1rem; line-height: 1.75; }
+  .outro-citation { font-size: 0.8rem; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 1.25rem; text-align: center; font-style: italic; margin-bottom: 2rem; }
+  .outro-restart { text-align: center; }
+
+  @media (max-width: 480px) {
+    body { padding: 1rem 0.75rem; }
+    .scenario-card, .diagnosis-body-wrap { padding: 1.25rem; }
+    .diagnosis-header { padding: 1.25rem; }
+    .outro-card { padding: 1.5rem; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/><path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/><path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"/><path d="M17.599 6.5a3 3 0 0 0 .399-1.375"/><path d="M6.003 5.125A3 3 0 0 0 6.401 6.5"/><path d="M3.477 10.896a4 4 0 0 1 .585-.396"/><path d="M19.938 10.5a4 4 0 0 1 .585.396"/><path d="M6 18a4 4 0 0 1-1.967-.516"/><path d="M19.967 17.484A4 4 0 0 1 18 18"/></svg>
+      AI Reasoning Diagnostic
+    </div>
+    <button class="btn-ghost" id="start-over-btn" style="display:none" onclick="restart()">Start Over</button>
+  </header>
+  <main id="main"></main>
+</div>
+
+<script>
+const SVG = {
+  brain: `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/><path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/><path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"/><path d="M17.599 6.5a3 3 0 0 0 .399-1.375"/><path d="M6.003 5.125A3 3 0 0 0 6.401 6.5"/><path d="M3.477 10.896a4 4 0 0 1 .585-.396"/><path d="M19.938 10.5a4 4 0 0 1 .585.396"/><path d="M6 18a4 4 0 0 1-1.967-.516"/><path d="M19.967 17.484A4 4 0 0 1 18 18"/></svg>`,
+  brainLg: `<svg width="160" height="160" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/><path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/><path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"/><path d="M17.599 6.5a3 3 0 0 0 .399-1.375"/><path d="M6.003 5.125A3 3 0 0 0 6.401 6.5"/><path d="M3.477 10.896a4 4 0 0 1 .585-.396"/><path d="M19.938 10.5a4 4 0 0 1 .585.396"/><path d="M6 18a4 4 0 0 1-1.967-.516"/><path d="M19.967 17.484A4 4 0 0 1 18 18"/></svg>`,
+  check: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>`,
+  checkSm: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>`,
+  alert: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>`,
+  chevL: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>`,
+  chevR: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>`,
+  rotate: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>`,
+  book: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>`,
+  arrow: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>`,
+};
+
+const data = {
+  intro: {
+    title: "When the Machine Was Wrong: Understand Why",
+    subtitle: "A field guide to AI reasoning failures you may have encountered without knowing what to call them.",
+    body: [
+      "You may have noticed it as a vague unease: an answer that was fluent and confident but somehow off. Or you may not have noticed anything at all, because the answer looked right and you had no particular reason to check. AI reasoning failures are not always visible at the moment they occur. They become visible later, or not at all, depending on whether the context gives you a way to verify.",
+      "This diagnostic is designed to help you name something you may have experienced without knowing what to call it. If you have a specific failure in mind, it will help you understand its structure. If you do not, the scenarios may help you recognise something you filed away as a minor oddness and moved on from."
+    ],
+    prompt: "Think of a moment when an AI system gave you an answer that felt off, incomplete, or wrong in a way you could not immediately explain. Which of these comes closest to describing it?"
+  },
+  categories: [
+    {
+      id: 'A', title: "People, relationships, and social context",
+      description: "The answer missed something about people, relationships, social context, or what the situation actually called for.",
+      scenarios: [
+        { id:'A1', title:"The model forgot what you told it", description:"You are partway through a long conversation with an AI system. Early on, you mentioned something important: a constraint, a preference, a fact about your situation. The conversation moved on. Later, the model gave you advice or produced content that contradicted or ignored what you had told it. When you pointed this out, it acknowledged the earlier information but had clearly not been using it.", diagnosisName:"Working memory failure", diagnosisBody:"Large language models process the entire conversation each time they respond, but their ability to keep earlier information active and weight it correctly degrades as the conversation grows. Information you provided early competes with everything that followed. The model did not forget in the way a human forgets; it lost the functional grip on earlier context that sustained reasoning requires.", confusionTitle:"a framing failure", confusionBody:"where the model responds differently depending on how you phrase a question. The distinction is location: working memory failures involve information already present in the conversation being dropped; framing failures involve the same question receiving different answers depending on its surface presentation." },
+        { id:'A2', title:"The answer changed when you changed the wording", description:"You asked an AI system a question and received an answer. You then asked what was essentially the same question again, phrased differently, perhaps more formally, or from a different angle. The answer was noticeably different, not a refinement or an elaboration, but a substantively different response. The system did not acknowledge the inconsistency.", diagnosisName:"Framing sensitivity failure", diagnosisBody:"This is a version of the cognitive bias that psychologists call the framing effect. The model's output is shaped not only by the content of your question but by its surface form: the words chosen, the order of information, the implicit perspective the phrasing suggests. A system that reasons from principles should produce consistent answers to logically equivalent questions. A system completing probable text sequences responds to the statistical properties of the phrasing, which change when the wording changes.", confusionTitle:"a working memory failure", confusionBody:"where earlier context is dropped. The distinction is whether prior context is involved at all. If you discovered the inconsistency by asking the same question twice with different wording rather than by the model ignoring something you had already told it, framing sensitivity is the more likely culprit." },
+        { id:'A3', title:"The model confidently agreed with whatever you suggested", description:"You were using an AI system to think through a decision or evaluate an idea. At some point you offered a suggestion or leaned toward a conclusion. The model supported it, perhaps elaborating on why you were right. Later you wondered whether it would have supported the opposite conclusion just as readily if you had suggested that instead. When you tested this, it did.", diagnosisName:"Confirmation bias and anchoring", diagnosisBody:"These are two related failures that often appear together. The model weights your stated preference or initial framing as a strong signal and organises its response around confirming it. This is not politeness or sycophancy in the human sense; it is a statistical tendency to produce continuations that align with the direction the prompt establishes. The model has learned from human-generated text in which agreement is more common than challenge, and its alignment training has reinforced this further.", confusionTitle:"a framing sensitivity failure", confusionBody:"The distinction is directionality: framing failures produce inconsistent answers to neutral questions; confirmation bias produces consistently agreeable answers to questions that contain an implied preference. If you noticed the failure only after you had already expressed a view, confirmation bias is the more likely explanation." },
+        { id:'A4', title:"The model misread what someone in a scenario believed or felt", description:"You described a situation involving another person and asked the model to reason about that person's perspective: what they were thinking, what they knew, what they were likely to feel. The model's answer was off. It attributed knowledge the person could not have had, or missed an obvious emotional inference, or described the person's likely state in a way that did not follow from the situation you described.", diagnosisName:"Theory of Mind failure at the level of inference", diagnosisBody:"Theory of Mind is the cognitive capacity to model another person's mental state: their beliefs, their knowledge, their emotional condition. Language models can reproduce the surface form of this kind of reasoning from the patterns in their training data. Under straightforward conditions they often succeed. When the scenario requires holding in mind that another person's knowledge differs from the facts you have stated, or when the emotional inference is not a common pattern in training text, the model's response reflects the statistical average rather than the specific situation.", confusionTitle:"a Theory of Mind failure — application level", confusionBody:"where the model reads the mental state correctly but responds to it wrongly. If the model correctly identified what the other person believed or felt but gave you advice that ignored it, that is a Theory of Mind failure at the application level, not this one." },
+        { id:'A5', title:"The model understood the situation but suggested the wrong response", description:"You described a socially sensitive or interpersonally complex situation. The model seemed to grasp the relevant facts and perhaps correctly characterised the other person's state or perspective. But its suggested response or recommended course of action was wrong in a way that felt socially tone-deaf: technically defensible but clearly not what the situation called for.", diagnosisName:"Theory of Mind failure at the level of application", diagnosisBody:"The model can, in many cases, correctly infer what another person believes or feels. Translating that inference into appropriate action requires a further step: understanding how social context, relationship dynamics, and cultural expectation shape what a correct response looks like. This step is where models fail most consistently. The training data encodes many descriptions of mental states but fewer precise mappings from mental state to contextually appropriate action.", confusionTitle:"a Theory of Mind failure — inference level", confusionBody:"where the model misreads what the other person believes or feels. If the model's reading of the other person's state was itself wrong rather than its response to that state, that is a Theory of Mind failure at the inference level, not this one." },
+        { id:'A6', title:"The model's moral or social judgement shifted across similar situations", description:"You asked an AI system to evaluate a situation involving fairness, obligation, or appropriate behaviour. Later, you encountered or constructed a situation that was structurally similar but described differently, perhaps with different people, a different setting, or a slightly different framing. The model's judgement was noticeably inconsistent between the two. It did not acknowledge the inconsistency.", diagnosisName:"Social norm and moral inconsistency failure", diagnosisBody:"Language models do not possess stable, internalised moral principles that they apply consistently across contexts. Their moral and social judgements are produced by the same pattern-completion mechanism as every other output: the answer reflects what the training data suggests is appropriate for this kind of prompt. When the surface features of the prompt change, the pattern changes, and the judgement changes with it. This is not hypocrisy in any meaningful sense. It is the absence of the underlying consistency that genuine moral reasoning requires.", confusionTitle:"a framing sensitivity failure", confusionBody:"The distinction is domain: framing failures can occur across any kind of question; moral inconsistency failures are specific to evaluative or normative questions. If the inconsistency appeared in a question about what is right, fair, or appropriate rather than a factual or analytical question, you are most likely looking at this failure." }
+      ]
+    },
+    {
+      id: 'B', title: "Logic, facts, and calculation",
+      description: "The answer got the logic, the facts, or the calculation wrong, even though the system seemed to understand the question.",
+      scenarios: [
+        { id:'B1', title:"The model had all the facts but failed to connect them", description:"You gave an AI system two or more pieces of information and asked it to reason across them. Individually, it handled each piece correctly. When you asked a question that required combining them into a single conclusion, it failed: guessing, hedging, or producing an answer that ignored one of the facts it had just correctly recalled.", diagnosisName:"Compositional reasoning failure", diagnosisBody:"Recalling a fact and integrating facts into a valid inference are different cognitive operations. Language models are trained to predict probable continuations of text sequences, which means they can retrieve individual facts reliably when asked directly. Combining multiple facts into a conclusion that neither fact states explicitly requires a planning operation that next-token prediction does not naturally produce. The model had the pieces. Assembling them is a different task.", confusionTitle:"a working memory failure", confusionBody:"where earlier information drops out of the conversation. The distinction is location: compositional failures occur even when all the relevant facts are present and recently stated. If the model recalled both facts correctly when you tested them individually, this is the failure you encountered." },
+        { id:'B2', title:"The model knew something in one direction but not the other", description:"You asked an AI system a question and received a correct answer. You then asked the same question from the opposite direction: the same relationship, the same facts, but with the known and unknown elements swapped. The model failed, often badly, on the second question despite having just answered the first correctly.", diagnosisName:"The reversal curse", diagnosisBody:"Language models learn from text in which certain statements appear far more often than their converses. 'A is B' appears in training data more frequently than 'B came from A,' which means the model's internal representations encode the relationship in one direction more strongly than the other. Knowing that Tom Cruise's mother is Mary Lee Pfeiffer does not, for these systems, automatically produce the knowledge of who Mary Lee Pfeiffer's son is. The asymmetry is structural and does not resolve with scale.", confusionTitle:"a compositional reasoning failure", confusionBody:"where the model fails to integrate multiple facts. The distinction is that the reversal curse involves a single fact stated in two directions. If you only gave the model one piece of information and it failed when you reversed the question, this is the failure you encountered." },
+        { id:'B3', title:"The answer changed when the surface details changed but the problem did not", description:"You asked an AI system to solve a logic or maths problem and received an answer. You then changed something that should not have mattered: the names of the people involved, the order of the options, or an irrelevant piece of context. The answer changed, even though the underlying problem was identical. The model did not acknowledge the inconsistency.", diagnosisName:"Robustness failure under perturbation", diagnosisBody:"A system reasoning from logical principles should produce identical answers to logically identical problems regardless of surface presentation. A system predicting probable text continuations responds to the statistical properties of the prompt, which shift when surface details change even if the logic does not. Renaming a character, reordering answer options, or adding an irrelevant sentence alters the prompt's relationship to training data, and therefore alters the output.", confusionTitle:"a framing sensitivity failure", confusionBody:"from the informal reasoning branch. The distinction is domain: framing failures typically involve evaluative or interpretive questions; robustness failures under perturbation occur in structured problems with objectively correct answers. If the problem had a single right answer and it changed when you changed an irrelevant detail, this is the failure you encountered." },
+        { id:'B4', title:"The model got counting wrong", description:"You asked an AI system to count something: letters in a word, items in a list, occurrences of a pattern in a short sequence. The answer was wrong. The error was not a complex one. The thing being counted was present and unambiguous. The model either missed items, double-counted, or produced a number that bore no clear relationship to the actual count.", diagnosisName:"Counting failure", diagnosisBody:"This is one of the most counterintuitive failures in the taxonomy given what these systems can otherwise do. The root cause is architectural. Language models process text as sequences of tokens, which do not map cleanly onto individual characters or discrete items. Counting requires tracking each instance of a target across a sequence, an operation that the self-attention mechanism does not perform reliably, particularly as the sequence length grows. The model has no internal tally. It produces what a count looks like rather than performing one.", confusionTitle:"a basic arithmetic failure", confusionBody:"where the model gets a calculation wrong. The distinction is operation: counting failures occur before any arithmetic begins. If the model produced the wrong number for a set of items that required no calculation beyond enumeration, this is the failure you encountered." },
+        { id:'B5', title:"The model got the arithmetic wrong", description:"You asked an AI system to perform a calculation: addition, subtraction, multiplication, or division. The answer was wrong. The error was not in understanding the problem. The model set up the calculation correctly but produced an incorrect result, often with larger numbers, middle digits, or multi-step operations.", diagnosisName:"Basic arithmetic failure", diagnosisBody:"Language models do not perform arithmetic in the way a calculator does. They produce answers that resemble the output of arithmetic based on patterns in training data. For simple, common calculations this produces correct results often enough to appear reliable. As operands grow larger or operations require carrying across multiple digits, the model's pattern-matching diverges from the actual calculation. Research has found a counterintuitive pattern: models sometimes succeed on harder operations and fail on simpler ones, because the simpler ones appear in training data in forms that invite incorrect pattern completion.", confusionTitle:"a counting failure", confusionBody:"where the model cannot enumerate a set correctly. The distinction is that arithmetic failures occur after a correct setup: the model knows what to calculate but calculates it incorrectly. If the model correctly identified what operation was needed and then produced a wrong number, this is the failure you encountered." },
+        { id:'B6', title:"The model answered a question that had no valid answer", description:"You gave an AI system a problem that was impossible, contained a false premise, or lacked sufficient information for a solution. The model produced an answer anyway, sometimes at length and with apparent confidence, without noting that the problem was flawed or unsolvable.", diagnosisName:"Unsolvable or faulty premise failure", diagnosisBody:"Language models are trained to produce responses, and the training objective does not reward identifying when a question should not be answered. A model that has learned to produce plausible-sounding outputs will apply that tendency to impossible questions as readily as to answerable ones. Identifying a false premise requires stepping back from the task and evaluating the question itself, a meta-cognitive operation that these systems perform inconsistently. Reasoning models, which generate extended chains of thought before answering, sometimes fare worse on these cases, entering loops rather than recognising that no valid answer exists.", confusionTitle:"a compositional reasoning failure", confusionBody:"where the model has all the facts but fails to integrate them. The distinction is the nature of the problem: compositional failures occur on valid, answerable questions; this failure occurs when the problem itself is the issue. If the question could not have been correctly answered by anyone with the information provided, this is the failure you encountered." }
+      ]
+    },
+    {
+      id: 'C', title: "How things work in the physical world",
+      description: "The answer ignored how things actually work in the physical world.",
+      scenarios: [
+        { id:'C1', title:"The model gave advice that ignored how materials or spaces actually behave", description:"You asked an AI system for practical advice involving physical objects, materials, or spaces. Perhaps you were planning a home project, asking about cooking, or figuring out whether something would fit somewhere. The answer was confident and detailed. It was also wrong in a way that anyone with hands-on experience would have caught immediately: it ignored how a material behaves under heat or pressure, misjudged a spatial relationship, or recommended something that the physical properties of the situation made impossible.", diagnosisName:"Physical commonsense failure", diagnosisBody:"Language models learn from descriptions of the physical world written by people who already understand it. Those descriptions assume a reader with tacit physical knowledge: the felt sense of how materials behave, how spaces relate, how objects interact under real conditions. The model has access to the description but not the knowledge the description assumes. It produces advice that is linguistically plausible without being physically grounded. This failure appears even in text-only settings, before any image or visual input is involved.", confusionTitle:"an affordance and planning failure", confusionBody:"where the model produces a sequence of steps that individually make sense but cannot be executed in the correct order or combination. The distinction is scope: physical commonsense failures occur at the level of a single fact or property; planning failures occur when a sequence of physically plausible steps is assembled in a way that does not work in practice. If the failure was in a single claim about how something behaves, this is the failure you encountered." },
+        { id:'C2', title:"The model got a physics or science question wrong despite appearing confident", description:"You asked an AI system a question involving a physical or scientific principle: how something moves, what happens when forces interact, why a natural phenomenon occurs. The model produced a detailed, structured answer. Some of it was correct. Part of it contradicted a basic physical law, attributed the wrong cause to an effect, or reached a conclusion that the physics did not support. The model did not flag any uncertainty.", diagnosisName:"Physics and scientific reasoning failure", diagnosisBody:"These failures are distinct from physical commonsense failures in their register: they involve formal principles rather than everyday intuitions. Language models can reproduce the surface structure of scientific explanation convincingly because scientific writing is well-represented in their training data. What they cannot reliably do is apply physical laws correctly in novel combinations, reason quantitatively across multiple steps, or catch when a conclusion contradicts a principle they have just correctly stated. Confident presentation and correct reasoning are different properties, and in scientific domains their divergence is particularly difficult to detect without domain knowledge.", confusionTitle:"a physical commonsense failure", confusionBody:"involving everyday objects. The distinction is formality: scientific reasoning failures involve named principles, laws, or quantitative relationships; physical commonsense failures involve intuitive knowledge that does not require formal training to possess. If the failure required knowing a specific physical law to catch, this is the failure you encountered." },
+        { id:'C3', title:"The model misread a spatial relationship in an image or description", description:"You shared an image with an AI system or described a spatial arrangement in text, and asked it to reason about the relationships between objects: which was closer, what was behind what, whether something would fit, how a space was organised. The model's answer did not match what was actually there. It conflated objects, misjudged distances, or described a spatial relationship that the image or description did not support.", diagnosisName:"Visual spatial reasoning failure", diagnosisBody:"Understanding spatial relationships requires more than recognising what objects are present. It requires modelling how those objects relate to each other in three dimensions, tracking how those relationships change as perspective shifts, and reasoning about what can and cannot occupy a given space. Language models, even those with visual input, tend to over-rely on object identity and learned associations rather than interpreting the actual spatial configuration in front of them. A model that knows what a kitchen looks like may describe one accurately while failing to reason correctly about the specific arrangement of objects in the kitchen you showed it.", confusionTitle:"a physical commonsense failure", confusionBody:"where the model ignores how materials or objects behave. The distinction is whether the error is about relationships between objects in space or about the properties of those objects. If the model correctly identified what the objects were but got their spatial relationship wrong, this is the failure you encountered." },
+        { id:'C4', title:"The model failed to notice something obviously wrong", description:"You showed an AI system an image or described a scene and asked it to evaluate, check, or describe what it saw. Something in the scene was clearly anomalous: an object in the wrong place, a physical impossibility, something that did not belong. The model either missed it entirely or described the scene as normal.", diagnosisName:"Anomaly detection failure", diagnosisBody:"Spotting what is wrong in a scene requires comparing what is present against a model of what should be present, and flagging the mismatch. Language models and vision-language models tend to generate descriptions that match the most probable interpretation of a scene based on training data, which means they default toward normal rather than attending to deviation. An image of someone skating on a wooden floor may be described as skating on an ice rink, because that is the statistically dominant context for skating in the training data. The model sees what it expects rather than what is there.", confusionTitle:"a visual spatial reasoning failure", confusionBody:"where the model misreads spatial relationships. The distinction is whether the model missed something that did not belong or misread something that was correctly presented. If the model produced a coherent description of the scene but missed something that was clearly out of place or did not belong, this is the failure you encountered." },
+        { id:'C5', title:"The model produced a plan that could not be executed in the real world", description:"You asked an AI system to help you plan a sequence of physical actions: a home repair, a cooking process, a packing or assembly task, a route through a physical space. The plan looked reasonable on paper. When you tried to follow it, or thought it through carefully, you found that the steps were in the wrong order, required doing something before a necessary precondition was met, or involved an action that was physically impossible given the state of the materials or space at that point in the sequence.", diagnosisName:"Affordance and planning failure", diagnosisBody:"Affordance refers to what actions an object or environment permits at a given moment: a drawer cannot be opened if something is blocking it, a surface cannot be painted if it has not been prepared, a component cannot be inserted before the one it attaches to is in place. Language models generate plans as text sequences, which means each step is produced as a plausible continuation of the preceding text rather than as a physically verified action in a modelled environment. The result can be a plan that reads coherently but does not account for the physical dependencies that real execution requires.", confusionTitle:"a physical commonsense failure", confusionBody:"where the model ignores a material property. The distinction is whether the failure is in a single claim or in the sequence. If individual steps were physically sound but the order or combination did not work, this is the failure you encountered." },
+        { id:'C6', title:"The model gave advice that was physically unsafe or ignored real-world risk", description:"You asked an AI system for practical guidance on a task involving some physical risk: using tools, handling materials, working in a particular environment, operating equipment. The model's advice was incomplete or wrong in a way that could have caused harm if followed without question. It either omitted a relevant safety consideration, recommended an action that was unsafe under the specific conditions you described, or failed to flag a risk that was directly implied by what you told it.", diagnosisName:"Safety and real-world risk failure", diagnosisBody:"These failures are a specific and consequential subset of physical commonsense failures. They occur when the gap between textual plausibility and physical grounding intersects with conditions where that gap has physical consequences. A model advising on tool use, chemical handling, or physical tasks in constrained environments is generating linguistically coherent guidance without running any simulation of what happens when that guidance meets the actual materials, forces, and conditions involved. The model's confidence does not encode an assessment of risk. It encodes the statistical likelihood that this kind of text follows the kind of prompt you provided.", confusionTitle:"an affordance and planning failure", confusionBody:"where the sequence of steps is wrong. The distinction is the nature of the consequence: planning failures produce inefficiency or failure to complete a task; safety failures produce the possibility of physical harm. If the advice, if followed, could have hurt someone or damaged something, this is the failure you encountered." }
+      ]
+    }
+  ],
+  outro: {
+    title: "A closing observation",
+    body: [
+      "Whatever failure you identified, notice one thing about it: the system that produced it did not know it had failed. It produced its answer with the same fluency and the same confidence it brings to answers that are correct. That is not a flaw that better design will easily fix. It is a property of how these systems work.",
+      "Knowing the name of the failure you encountered is useful. Knowing that the system cannot tell you when it is about to repeat it is more useful still."
+    ],
+    citation: "This diagnostic draws on Song, Han, and Goodman, \u201cLarge Language Model Reasoning Failures,\u201d Transactions on Machine Learning Research, January 2026."
+  }
+};
+
+let state = { view: 'home', catIdx: null, scIdx: 0 };
+
+function setState(updates) {
+  state = Object.assign({}, state, updates);
+  render();
+}
+
+function restart() { setState({ view: 'home', catIdx: null, scIdx: 0 }); }
+
+function render() {
+  const main = document.getElementById('main');
+  const startOverBtn = document.getElementById('start-over-btn');
+  startOverBtn.style.display = state.view !== 'home' ? 'inline-block' : 'none';
+
+  let html = '';
+  if (state.view === 'home') html = renderHome();
+  else if (state.view === 'category') html = renderScenario();
+  else if (state.view === 'endOfCategory') html = renderEndOfCategory();
+  else if (state.view === 'diagnosis') html = renderDiagnosis();
+  else if (state.view === 'outro') html = renderOutro();
+
+  main.innerHTML = html;
+
+  // Bind events after render
+  main.querySelectorAll('[data-action]').forEach(el => {
+    el.addEventListener('click', handleAction);
+  });
+}
+
+function handleAction(e) {
+  const btn = e.currentTarget;
+  const action = btn.dataset.action;
+  if (action === 'start-cat') setState({ view: 'category', catIdx: parseInt(btn.dataset.idx), scIdx: 0 });
+  else if (action === 'restart') restart();
+  else if (action === 'prev-scenario') setState({ scIdx: state.scIdx - 1 });
+  else if (action === 'next-scenario') {
+    const cat = data.categories[state.catIdx];
+    if (state.scIdx < cat.scenarios.length - 1) setState({ scIdx: state.scIdx + 1 });
+    else setState({ view: 'endOfCategory' });
+  }
+  else if (action === 'diagnose') setState({ view: 'diagnosis' });
+  else if (action === 'back-to-scenario') setState({ view: 'category' });
+  else if (action === 'outro') setState({ view: 'outro' });
+}
+
+function renderHome() {
+  const cats = data.categories.map((cat, i) => `
+    <button class="category-btn" data-action="start-cat" data-idx="${i}">
+      <div class="cat-id">${cat.id}</div>
+      <div>
+        <div class="cat-title">${cat.title}</div>
+        <div class="cat-desc">${cat.description}</div>
+      </div>
+    </button>`).join('');
+
+  return `<div class="fade-in">
+    <div class="hero">
+      <div class="hero-icon">${SVG.brain}</div>
+      <h1>${data.intro.title}</h1>
+      <p class="subtitle">${data.intro.subtitle}</p>
+    </div>
+    <div class="intro-card">
+      ${data.intro.body.map(p => `<p>${p}</p>`).join('')}
+      <div class="intro-divider">
+        <p class="intro-prompt">${data.intro.prompt}</p>
+      </div>
+    </div>
+    <div class="category-list">
+      ${cats}
+      <div class="start-hint">
+        <button class="link-btn" data-action="start-cat" data-idx="0">Not sure, or haven't noticed a failure yet? Start with A.</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderScenario() {
+  const cat = data.categories[state.catIdx];
+  const s = cat.scenarios[state.scIdx];
+  const pct = (state.scIdx / cat.scenarios.length) * 100;
+  const isFirst = state.scIdx === 0;
+
+  return `<div class="scenario-wrap fade-in">
+    <div class="progress-bar-wrap">
+      <button class="back-btn" data-action="restart">${SVG.chevL} Back to Categories</button>
+      <div class="progress-meta">
+        <span>Category ${cat.id}: ${cat.title}</span>
+        <span>${state.scIdx + 1} of ${cat.scenarios.length}</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+    </div>
+    <div class="scenario-card">
+      <div class="scenario-accent"></div>
+      <div class="scenario-title">${SVG.book} Scenario ${s.id}: ${s.title}</div>
+      <p class="scenario-body">${s.description}</p>
+      <div class="match-box">
+        <p class="match-prompt">Does this match something you have experienced?</p>
+        <button class="btn-primary" data-action="diagnose">${SVG.check} Yes, this matches</button>
+        <div class="nav-row">
+          <button class="btn-secondary" data-action="prev-scenario" ${isFirst ? 'disabled' : ''}>${SVG.chevL} Previous</button>
+          <button class="btn-secondary" data-action="next-scenario">No, show next ${SVG.chevR}</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderEndOfCategory() {
+  return `<div class="end-wrap fade-in">
+    <div class="end-icon">${SVG.check}</div>
+    <h2>End of Category</h2>
+    <p>You've reviewed all scenarios in this category without finding a match.</p>
+    <div class="end-actions">
+      <button class="btn-outline" data-action="back-to-scenario">${SVG.chevL} Back to last scenario</button>
+      <button class="btn-outline" data-action="restart">Try another category</button>
+      <button class="btn-solid" data-action="outro">Read closing observation</button>
+    </div>
+  </div>`;
+}
+
+function renderDiagnosis() {
+  const s = data.categories[state.catIdx].scenarios[state.scIdx];
+  return `<div class="diagnosis-wrap fade-in">
+    <div class="diagnosis-card">
+      <div class="diagnosis-header">
+        <div class="diagnosis-badge">${SVG.checkSm} Diagnosis Match</div>
+        <div class="diagnosis-name">${s.diagnosisName}</div>
+      </div>
+      <div class="diagnosis-body-wrap">
+        <p class="diagnosis-body">${s.diagnosisBody}</p>
+        <div class="confusion-box">
+          <div class="confusion-title">${SVG.alert} You might be confusing this with...</div>
+          <p class="confusion-body"><strong>${s.confusionTitle}</strong>, ${s.confusionBody}</p>
+        </div>
+      </div>
+    </div>
+    <div class="diagnosis-actions">
+      <div class="diagnosis-actions-left">
+        <button class="btn-outline" data-action="back-to-scenario">${SVG.chevL} Back to scenario</button>
+        <button class="btn-outline" data-action="restart">${SVG.rotate} Start Over</button>
+      </div>
+      <button class="btn-dark" data-action="outro">Read Closing Observation ${SVG.arrow}</button>
+    </div>
+  </div>`;
+}
+
+function renderOutro() {
+  return `<div class="outro-wrap fade-in">
+    <div class="outro-card">
+      <div class="outro-bg-icon">${SVG.brainLg}</div>
+      <h2>${data.outro.title}</h2>
+      <div class="outro-paras">${data.outro.body.map(p => `<p>${p}</p>`).join('')}</div>
+    </div>
+    <div class="outro-citation">${data.outro.citation}</div>
+    <div class="outro-restart">
+      <button class="link-btn" data-action="restart" style="display:inline-flex;align-items:center;gap:0.4rem">${SVG.rotate} Return to Diagnostic Start</button>
+    </div>
+  </div>`;
+}
+
+render();
+</script>
+</body>
+</html>
